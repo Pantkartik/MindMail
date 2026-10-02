@@ -1,4 +1,4 @@
-# 🧠 MailMind — Agentic Personal Productivity Assistant
+#  MailMind — Agentic Personal Productivity Assistant
 
 > An enterprise-grade, multi-agent AI assistant that connects your Gmail, Google Calendar, and persistent user memory to answer complex cross-source inquiries and prepare human-approved actions.
 
@@ -9,7 +9,7 @@
 
 ---
 
-## 🌟 Why MailMind?
+##  Why MailMind?
 
 Most AI email assistants are simple chatbots or LLM wrappers that only read your unread inbox. **MailMind** is built from the ground up as a **hierarchical multi-agent system**:
 
@@ -79,19 +79,6 @@ uvicorn backend.api.main:app --reload --port 8000
 
 ### 4. Interactive Testing
 Visit the API docs at `http://localhost:8000/docs`.
-
----
-
-## 🎯 Resume & Portfolio Narrative
-
-When presenting **MailMind** on your resume or in technical interviews:
-
-### Resume Bullets
-> **MailMind — Agentic Personal Productivity Assistant**  
-> *Next.js · FastAPI · LangGraph · PostgreSQL · pgvector · Gmail API · Google Calendar · Docker*  
-> - Engineered a multi-agent personal productivity assistant performing multi-hop reasoning across Gmail, Google Calendar, and persistent vector memory to provide source-verified answers.  
-> - Designed a LangGraph orchestration engine with dynamic planning, tool routing, reciprocal rank fusion (RRF) RAG, and automated long-term memory extraction.  
-> - Implemented Human-in-the-Loop (HITL) safety gates ensuring email actions require user authorization, accompanied by real-time SSE execution tracing and LangSmith evaluation.
 
 ---
 
