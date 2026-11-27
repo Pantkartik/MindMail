@@ -3,10 +3,8 @@ MailMind Dual-Tier Memory Engine
 Manages short-term conversation state and long-term user preference extraction.
 """
 
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List
 from pydantic import BaseModel, Field
-from langchain_core.messages import SystemMessage, HumanMessage
-from langchain.chat_models import init_chat_model
 
 
 class UserProfileMemory(BaseModel):
@@ -37,27 +35,22 @@ class MemoryManager:
         self.db = db_session
 
     async def get_user_preferences(self, user_id: str) -> Dict[str, Any]:
-        """Fetch all stored preferences for the user."""
-        # Returns default preferences if DB is not configured yet
-        return {
-            "tone": "Professional and concise",
-            "max_sentences": 4,
-            "sign_off": "Best regards,\nKartik",
-            "preferred_meeting_times": "After 2:00 PM",
-            "college_domain": "college.edu"
-        }
+        """Fetch stored preferences for the user."""
+        if self.db is None:
+            return {}
+        raise NotImplementedError("Persistent memory storage is not implemented.")
 
-    async def extract_and_save_preferences(self, user_id: str, messages: list) -> List[UserProfileMemory]:
-        """Analyzes recent messages to detect and persist new user habits/preferences."""
+    async def extract_preferences(self, user_id: str, messages: list) -> List[UserProfileMemory]:
+        """Analyze recent messages for candidate preferences; does not persist them."""
+        from langchain.chat_models import init_chat_model
+        from langchain_core.messages import HumanMessage, SystemMessage
+
         llm = init_chat_model("openai:gpt-4o-mini", temperature=0.0)
         structured_auditor = llm.with_structured_output(UserProfileMemory)
 
         formatted_convo = "\n".join([f"{m.type}: {m.content}" for m in messages[-4:]])
-        try:
-            detected = structured_auditor.invoke([
-                SystemMessage(content=MEMORY_EXTRACTOR_PROMPT),
-                HumanMessage(content=formatted_convo)
-            ])
-            return [detected]
-        except Exception:
-            return []
+        detected = structured_auditor.invoke([
+            SystemMessage(content=MEMORY_EXTRACTOR_PROMPT),
+            HumanMessage(content=formatted_convo)
+        ])
+        return [detected]

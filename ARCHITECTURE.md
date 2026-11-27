@@ -1,5 +1,7 @@
 # MailMind — Architecture & Technical Design
 
+> **Status:** This document describes the intended target architecture. A small local browser dashboard now exists, but the current codebase does not implement the authentication, persistence, live integrations, or production safeguards shown below. See `README.md` for the verified local-demo scope.
+
 ## 1. System Overview
 MailMind is an agentic productivity system that orchestrates multi-agent workflows to inspect emails, query calendar appointments, synthesize information with semantic memory, and execute approved user actions.
 

@@ -7,7 +7,6 @@ import base64
 import logging
 from typing import Dict, Any, List, Optional
 from email.mime.text import MIMEText
-from langchain_core.tools import tool
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +55,8 @@ class GmailToolManager:
                 "subject": "Interview Invitation: Senior Software Engineer",
                 "date": "2026-10-01T10:00:00Z",
                 "snippet": "We would like to invite you for a 45-min system design interview...",
-                "body": "Dear Candidate,\nWe would like to invite you for a 45-minute technical interview next week..."
+                "body": "Dear Candidate,\nWe would like to invite you for a 45-minute technical interview next week...",
+                "is_sample": True,
             }]
         
         try:
@@ -72,24 +72,25 @@ class GmailToolManager:
                 parsed_list.append(parse_email_message(detail))
             return parsed_list
         except Exception as e:
-            logger.error(f"Error querying Gmail API: {e}")
-            return [{"error": str(e)}]
+            logger.exception("Error querying Gmail API")
+            raise RuntimeError("Gmail search failed.") from e
 
     def draft_reply(self, thread_id: str, to: str, subject: str, body: str) -> Dict[str, Any]:
         """Drafts an email for user review and approval (HITL)."""
         return {
-            "status": "draft_created",
+            "status": "draft_prepared",
             "thread_id": thread_id,
             "to": to,
             "subject": subject if subject.startswith("Re:") else f"Re: {subject}",
             "body": body,
+            "persisted": False,
             "requires_approval": True,
         }
 
     def send_email(self, to: str, subject: str, body: str, thread_id: Optional[str] = None) -> Dict[str, Any]:
         """Executes actual email dispatch (Invoked ONLY after user approval)."""
         if not self.service:
-            return {"status": "success", "message": f"[MOCK] Email dispatched to {to}"}
+            raise RuntimeError("Gmail is not configured; no email was sent.")
         
         message = MIMEText(body)
         message["to"] = to
