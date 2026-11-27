@@ -1,8 +1,10 @@
 # Product Requirement Document (PRD)
 # MailMind — Agentic Personal Productivity Assistant
 
+> **Status:** This is a target-state proposal and implementation roadmap, not a description of shipped capabilities. The current repository is an early-stage local API prototype; see `README.md` for implemented behavior and limitations.
+
 **Project Name:** MailMind  
-**Version:** 1.0.0 (Production-Ready Architecture)  
+**Version:** 0.1.0 (Target-State Draft)
 **Author:** Kartik Pant  
 **Target:** Production Portfolio / Open Source System / Enterprise AI Assistant  
 **Reference Origin:** `langchain-ai/agents-from-scratch` (Foundation & Learning Reference)  

@@ -1,48 +1,48 @@
-"""
-MailMind FastAPI Server
-REST & Server-Sent Events (SSE) API Gateway for MailMind.
-"""
+"""FastAPI gateway for the MailMind local demo."""
 
-from fastapi import FastAPI, HTTPException, Request
+import json
+import os
+from typing import Optional
+
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
-from typing import Optional, List, Dict, Any
-import json
-import asyncio
+from pydantic import BaseModel, Field
 
 from backend.tools.gmail import GmailToolManager
 from backend.tools.calendar import CalendarToolManager
-from backend.rag.pipeline import EmailRAGPipeline
 from backend.memory.store import MemoryManager
-from backend.agents.orchestrator import build_mailmind_graph
 
 app = FastAPI(
     title="MailMind Agent API",
-    description="Agentic Personal Productivity & Email Assistant API",
-    version="1.0.0"
+    description="Local demo API for the MailMind productivity assistant prototype.",
+    version="0.1.0",
 )
 
-# CORS setup
+cors_origins = [
+    origin.strip()
+    for origin in os.getenv(
+        "CORS_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000"
+    ).split(",")
+    if origin.strip()
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=cors_origins,
+    allow_credentials=False,
+    allow_methods=["GET", "POST"],
+    allow_headers=["Content-Type"],
 )
 
-# Instantiate Core Managers
 gmail_manager = GmailToolManager()
 calendar_manager = CalendarToolManager()
-rag_pipeline = EmailRAGPipeline()
 memory_manager = MemoryManager()
 
 
 class ChatRequest(BaseModel):
-    message: str
-    thread_id: Optional[str] = "default_session"
-    user_id: Optional[str] = "user_demo"
+    message: str = Field(min_length=1, max_length=4000)
+    thread_id: Optional[str] = Field(default="local-demo", max_length=128)
 
 
 class ApprovalRequest(BaseModel):
@@ -53,77 +53,88 @@ class ApprovalRequest(BaseModel):
 
 @app.get("/health")
 async def health_check():
-    return {"status": "ok", "service": "MailMind API", "version": "1.0.0"}
+    return {
+        "status": "ok",
+        "service": "MailMind API",
+        "version": app.version,
+        "mode": "local_demo",
+        "integrations": "mock",
+    }
 
 
 @app.post("/api/v1/chat")
 async def chat_endpoint(request: ChatRequest):
-    """
-    Chat endpoint with Server-Sent Events (SSE) to stream planner steps,
-    tool execution traces, and final synthesized answers.
-    """
+    """Stream a clearly labeled local-demo response using fixture data."""
+
     async def event_generator():
-        # Initial status
-        yield f"data: {json.dumps({'type': 'trace', 'stage': 'planner', 'message': 'Decomposing inquiry into tasks...'})}\n\n"
-        await asyncio.sleep(0.3)
-
-        # Mock trace progression for demo streaming
-        yield f"data: {json.dumps({'type': 'trace', 'stage': 'gmail_search', 'message': 'Querying recent Gmail messages...'})}\n\n"
-        await asyncio.sleep(0.4)
-
-        yield f"data: {json.dumps({'type': 'trace', 'stage': 'calendar_check', 'message': 'Checking Google Calendar availability...'})}\n\n"
-        await asyncio.sleep(0.3)
-
-        yield f"data: {json.dumps({'type': 'trace', 'stage': 'evidence_verification', 'message': 'Cross-referencing evidence & citations...'})}\n\n"
-        await asyncio.sleep(0.3)
-
-        # Output payload
+        yield _sse_event(
+            {
+                "type": "trace",
+                "stage": "demo",
+                "message": "Preparing the local demo response; no live account is connected.",
+            }
+        )
+        emails = gmail_manager.search_emails("is:unread")
+        events = calendar_manager.list_upcoming_events()
         response_payload = {
             "type": "content",
             "text": (
-                "You have an upcoming **Technical Interview with Stripe** scheduled for "
-                "**Thursday at 4:00 PM IST**.\n\n"
-                "According to the recruiter email from *recruiter@techcorp.io*, you should prepare "
-                "a 15-minute presentation on your distributed systems project.\n\n"
-                "I have also prepared a draft reply to confirm your attendance."
+                "Local demo only: this response uses sample Gmail and Calendar fixtures, "
+                "not your personal accounts. Live integrations, AI planning, and action "
+                "execution are not configured in this prototype."
             ),
+            "query": request.message,
             "citations": [
-                {
-                    "source": "Gmail",
-                    "title": "Interview Invitation: Senior Software Engineer",
-                    "sender": "recruiter@techcorp.io",
-                    "timestamp": "2026-10-01"
-                },
-                {
-                    "source": "Google Calendar",
-                    "title": "Technical Interview - Stripe",
-                    "timestamp": "Thursday, 4:00 PM - 5:00 PM"
-                }
+                *[
+                    {
+                        "source": "Gmail (sample)",
+                        "title": email.get("subject", "Sample email"),
+                        "timestamp": email.get("date", ""),
+                        "snippet": email.get("snippet", ""),
+                    }
+                    for email in emails
+                    if "error" not in email
+                ],
+                *[
+                    {
+                        "source": "Calendar (sample)",
+                        "title": event.get("summary", "Sample event"),
+                        "timestamp": event.get("start", ""),
+                        "snippet": event.get("description", ""),
+                    }
+                    for event in events
+                    if "error" not in event
+                ],
             ],
-            "pending_approval": {
-                "action": "send_email",
-                "to": "recruiter@techcorp.io",
-                "subject": "Re: Interview Invitation: Senior Software Engineer",
-                "body": "Dear Recruiter,\n\nThank you for the update. I confirm my availability for Thursday at 4:00 PM IST.\n\nBest regards,\nKartik"
-            }
         }
-        yield f"data: {json.dumps(response_payload)}\n\n"
+        yield _sse_event(response_payload)
         yield "data: [DONE]\n\n"
 
-    return StreamingResponse(event_generator(), media_type="text/event-stream")
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
 
 
 @app.post("/api/v1/chat/approve")
 async def approve_action(request: ApprovalRequest):
-    """Handles Human-in-the-Loop approval/rejection."""
-    if request.approved:
-        return {"status": "success", "message": "Action approved and dispatched to Gmail API."}
-    else:
-        return {"status": "cancelled", "message": "Action rejected. Assistant state reset."}
+    """Reject action execution until resumable HITL and live integrations exist."""
+    raise HTTPException(
+        status_code=501,
+        detail="Action approval is not implemented; no action was executed.",
+    )
 
 
 @app.get("/api/v1/memory")
-async def get_memories(user_id: str = "user_demo"):
-    """Fetches long-term extracted user habits and preferences."""
-    prefs = await memory_manager.get_user_preferences(user_id)
-    return {"user_id": user_id, "preferences": prefs}
+async def get_memories():
+    """Return persisted preferences only when a memory store is configured."""
+    prefs = await memory_manager.get_user_preferences("local-demo")
+    return {
+        "configured": memory_manager.db is not None,
+        "preferences": prefs,
+    }
+
+
+def _sse_event(payload: dict) -> str:
+    return f"data: {json.dumps(payload, ensure_ascii=False)}\n\n"
