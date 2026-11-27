@@ -20,6 +20,34 @@ def test_health_reports_local_demo_mode():
     assert response.json()["integrations"] == "mock"
 
 
+def test_frontend_is_served_from_the_api_root():
+    response = client.get("/")
+
+    assert response.status_code == 200
+    assert "text/html" in response.headers["content-type"]
+    assert "MailMind" in response.text
+
+
+def test_frontend_styles_and_script_are_served():
+    css_response = client.get("/styles.css")
+    js_response = client.get("/app.js")
+
+    assert css_response.status_code == 200
+    assert "text/css" in css_response.headers["content-type"]
+    assert js_response.status_code == 200
+    assert "javascript" in js_response.headers["content-type"]
+
+
+def test_dashboard_overview_marks_fixtures_as_sample_data():
+    response = client.get("/api/v1/demo/overview")
+
+    assert response.status_code == 200
+    overview = response.json()
+    assert overview["sample_data"] is True
+    assert overview["emails"]
+    assert overview["events"]
+
+
 def test_chat_stream_labels_fixture_data():
     response = client.post(
         "/api/v1/chat",

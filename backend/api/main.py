@@ -2,11 +2,13 @@
 
 import json
 import os
+from pathlib import Path
 from typing import Optional
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from backend.tools.gmail import GmailToolManager
@@ -38,6 +40,7 @@ app.add_middleware(
 gmail_manager = GmailToolManager()
 calendar_manager = CalendarToolManager()
 memory_manager = MemoryManager()
+frontend_dir = Path(__file__).resolve().parents[2] / "frontend"
 
 
 class ChatRequest(BaseModel):
@@ -59,6 +62,19 @@ async def health_check():
         "version": app.version,
         "mode": "local_demo",
         "integrations": "mock",
+    }
+
+
+@app.get("/api/v1/demo/overview")
+async def demo_overview():
+    """Return the sample records displayed by the local demo dashboard."""
+    emails = gmail_manager.search_emails("is:unread")
+    events = calendar_manager.list_upcoming_events()
+    return {
+        "mode": "local_demo",
+        "sample_data": True,
+        "emails": [email for email in emails if "error" not in email],
+        "events": [event for event in events if "error" not in event],
     }
 
 
@@ -138,3 +154,6 @@ async def get_memories():
 
 def _sse_event(payload: dict) -> str:
     return f"data: {json.dumps(payload, ensure_ascii=False)}\n\n"
+
+
+app.mount("/", StaticFiles(directory=frontend_dir, html=True), name="frontend")

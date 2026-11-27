@@ -1,16 +1,18 @@
 # MailMind
 
-MailMind is an early-stage Python prototype exploring an email and calendar productivity assistant. The repository currently contains a FastAPI local demo, fixture-backed Gmail and Calendar managers, and initial LangGraph/RAG/memory scaffolding. It is **not** a production-ready agent: there is no frontend, OAuth flow, persistent database integration, live Google API wiring, or working approval/resume flow.
+MailMind is an early-stage Python prototype exploring an email and calendar productivity assistant. The repository contains a FastAPI local demo, a small browser dashboard, fixture-backed Gmail and Calendar managers, and initial LangGraph/RAG/memory scaffolding. It is **not** a production-ready agent: there is no OAuth flow, persistent database integration, live Google API wiring, or working approval/resume flow.
 
 ## What works today
 
 - FastAPI health, chat-stream, and memory endpoints.
+- A responsive browser dashboard served by FastAPI at `http://localhost:8000/`.
+- A demo overview endpoint that supplies explicitly sample-labeled inbox and agenda records.
 - A Server-Sent Events (SSE) chat response with explicitly labeled sample citations.
 - Local fixture data for Gmail and Calendar so the API can be explored without credentials.
 - A fail-closed approval endpoint: it returns `501 Not Implemented` and does not claim that an action was executed.
 - Unit tests for the current API behavior and validation boundaries.
 
-The chat response is a demo placeholder; it does not interpret the request with an LLM. Fixture records are not real user data. Memory reads return no preferences until persistence is implemented.
+The chat response is a demo placeholder; it does not interpret the request with an LLM. Fixture records shown in the dashboard are not real user data. Memory reads return no preferences until persistence is implemented. Email/calendar mutations remain unavailable.
 
 ## Run locally
 
@@ -23,7 +25,7 @@ python -m pip install -r backend/requirements.txt
 uvicorn backend.api.main:app --reload --port 8000
 ```
 
-Open `http://localhost:8000/docs` for the interactive API docs or `http://localhost:8000/health` for the health check. No API keys are needed for the local demo. The `.env.example` file is a configuration sketch; the current app does not load it.
+Open `http://localhost:8000/` for the dashboard, `http://localhost:8000/docs` for the interactive API docs, or `http://localhost:8000/health` for the health check. No API keys are needed for the local demo. The `.env.example` file is a configuration sketch; the current app does not load it.
 
 To try the streaming endpoint:
 
@@ -55,6 +57,9 @@ pytest -q
 │   ├── memory/       # Memory model and extraction scaffold
 │   ├── rag/          # Email chunking and RAG scaffold
 │   └── tools/        # Gmail and Calendar wrappers with local fixtures
+├── frontend/         # Responsive static dashboard served by FastAPI
+├── PRODUCT.md        # Product facts and implementation boundaries
+├── DESIGN.md         # Local dashboard visual system
 ├── docker-compose.yml
 ├── PRD.md            # Product requirements / target-state proposal
 └── ARCHITECTURE.md   # Target architecture proposal
@@ -68,6 +73,6 @@ The documents in `PRD.md` and `ARCHITECTURE.md` describe the intended target sys
 2. Replace the placeholder chat response with a configured, tested agent graph and make SSE stream actual graph events.
 3. Implement persistent memory and email ingestion/search with database migrations and user isolation.
 4. Add LangGraph checkpointing and a verified approval/resume flow before enabling external actions.
-5. Build the frontend, then add integration tests and deployment configuration.
+5. Add integration tests and deployment configuration.
 
 Until those safeguards are implemented, this prototype must not be used with real mailboxes or for real-world actions.
