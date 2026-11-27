@@ -1,4 +1,4 @@
-#  MailMind — Agentic Personal Productivity Assistant
+#  Mindmail — Agentic Personal Productivity Assistant
 
 > An enterprise-grade, multi-agent AI assistant that connects your Gmail, Google Calendar, and persistent user memory to answer complex cross-source inquiries and prepare human-approved actions.
 
@@ -9,9 +9,9 @@
 
 ---
 
-##  Why MailMind?
+##  Why Mindmail?
 
-Most AI email assistants are simple chatbots or LLM wrappers that only read your unread inbox. **MailMind** is built from the ground up as a **hierarchical multi-agent system**:
+Most AI email assistants are simple chatbots or LLM wrappers that only read your unread inbox. **Mindmail** is built from the ground up as a **hierarchical multi-agent system**:
 
 - **Task Planner:** Decomposes multi-faceted questions into atomic sub-tasks.
 - **Cross-Source Reasoning:** Seamlessly cross-references emails with calendar events (e.g., matching interview confirmation emails with calendar slots and preparation instructions).
@@ -85,7 +85,7 @@ Visit the API docs at `http://localhost:8000/docs`.
 ## 📁 Repository Structure
 
 ```
-mailmind/
+Mindmail/
 ├── PRD.md                 # Complete Product Requirements Document
 ├── ARCHITECTURE.md        # Technical architecture & LangGraph state design
 ├── docker-compose.yml     # PostgreSQL + pgvector & Redis services
@@ -93,7 +93,7 @@ mailmind/
 ├── backend/
 │   ├── requirements.txt   # Python dependencies
 │   ├── agents/
-│   │   ├── state.py       # MailMind TypedDict State definition
+│   │   ├── state.py       # Mindmail TypedDict State definition
 │   │   ├── planner.py     # AI Task Decomposition Planner
 │   │   └── orchestrator.py# LangGraph compilation & HITL interrupts
 │   ├── tools/
